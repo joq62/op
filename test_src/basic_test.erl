@@ -42,6 +42,10 @@ start()->
     ?assertEqual(ok,start_stop_service()),
     ?debugMsg("Stop start_stop_service "),
 
+    ?debugMsg("Start deploy "),
+    ?assertEqual(ok,deploy()),
+    ?debugMsg("Stop deploy "),
+
     ?debugMsg("Start add_db_node "),
     ?assertEqual(ok,add_db_node()),
     ?debugMsg("Stop add_db_node "),
@@ -55,9 +59,20 @@ start()->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
+deploy()->
+    R=op:add_deployment("math","1.0.0"),
+    io:format(" ~p~n",[{?MODULE,?LINE,R}]),
+    ok.
+
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
 add_db_node()->
     rpc:call('10250@sthlm_1',mnesia,stop,[]),
     op:add_db_node("sthlm_1","10250"),
+    io:format("all ~p~n",[{?MODULE,?LINE,mnesia:system_info(all)}]),
     ok.
 
 %% --------------------------------------------------------------------

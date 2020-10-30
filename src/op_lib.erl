@@ -9,31 +9,53 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
--include_lib("eunit/include/eunit.hrl").
+
 %% --------------------------------------------------------------------
 
 -define(WAIT_FOR_TABLES,5000).
 %% External exports
--export([db_init/1,
+-export([
 	 start_host/1,
 	 stop_host/1,
 	 create_service/4,
 	 delete_service/4,
-	 add_db_node/2
+	 add_db_node/2,
+	 add_deployment/2,
+	 remove_deployment/1
 	]).
 
 %% ====================================================================
 %% External functions
 %% ====================================================================
-db_init(TextFile)->
-    mnesia:stop(),
-    mnesia:delete_schema([node()]),
-    mnesia:create_schema([node()]),
-    
 
-    mnesia:load_textfile(?TEXTFILE),
-    mnesia:start(),    
-    timer:sleep(1000),
+%% --------------------------------------------------------------------
+%% Function:tes cases
+%% Description: List of test cases 
+%% Returns: non
+%% --------------------------------------------------------------------
+add_deployment(AppId,Vsn)->
+    Result=case db_deployment_spec:read(AppId,Vsn) of
+	       []->
+		   {error,[eexists,AppId,Vsn,?MODULE,?LINE]};
+	       DepSpec->
+		   DepSpec
+	   end,
+    Result.
+
+
+%% --------------------------------------------------------------------
+%% Function:tes cases
+%% Description: List of test cases 
+%% Returns: non
+%% --------------------------------------------------------------------
+remove_deployment(DeploymentId)->
+    Result=case db_deployment:read(DeploymentId) of
+	       []->
+		   {error,[eexists,DeploymentId,?MODULE,?LINE]};
+	       DepInfo->
+		   DepInfo
+	   end,
+    Result.
 
     
 %% --------------------------------------------------------------------
@@ -41,6 +63,14 @@ db_init(TextFile)->
 %% Description: List of test cases 
 %% Returns: non
 %% --------------------------------------------------------------------
+
+%% --------------------------------------------------------------------
+%% Function:tes cases
+%% Description: List of test cases 
+%% Returns: non
+%% --------------------------------------------------------------------
+
+
 add_db_node(HostId,VmId)->
     Vm=list_to_atom(VmId++"@"++HostId),
     ok=rpc:call(Vm,mnesia,start,[]),

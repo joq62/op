@@ -1,0 +1,7 @@
+1) Start vm 10250@asus
+
+2) application:start(dbase) on 10250@asus
+
+2) load and start iaas on 10250@asus
+
+3) load 

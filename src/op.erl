@@ -29,11 +29,10 @@
 %% Definitions 
 %% --------------------------------------------------------------------
 -define(HbInterval,20*1000).
--define(ControlVmId,"10250").
--define(WorkerVmIds,["30000","30001","30002","30003","30004","30005","30006","30007","30008","30009"]).
 
 -export([start_host/1,stop_host/1,
 	 create_service/4,delete_service/4,
+	 add_deployment/2,remove_deployment/1,
 	 add_db_node/2
 	]).
 
@@ -65,6 +64,11 @@ ping()->
     gen_server:call(?MODULE, {ping},infinity).
 
 %%-----------------------------------------------------------------------
+add_deployment(AppId,Vsn)-> 
+    gen_server:call(?MODULE, {add_deployment,AppId,Vsn},infinity).
+remove_deployment(DeploymentId)-> 
+    gen_server:call(?MODULE, {remove_deployment,DeploymentId},infinity).
+
 add_db_node(HostId,VmId)-> 
     gen_server:call(?MODULE, {add_db_node,HostId,VmId},infinity).
 
@@ -100,18 +104,15 @@ heart_beat({Interval,ComputerStatus,VmStatus})->
 %
 %% --------------------------------------------------------------------
 
-% To be removed
--define(TEXTFILE,"./src/db_op_init.hrl").
-
 init([]) ->
     ssh:start(),
-    mnesia:stop(),
-    mnesia:delete_schema([node()]),
-    mnesia:create_schema([node()]),
-    mnesia:load_textfile(?TEXTFILE),
-    mnesia:start(),    
-    timer:sleep(1000),
-
+    ok=application:start(dbase),
+    op_lib:add_db_node("asus","10250"),
+    ok=application:start(iaas),
+ %   application:start(control),
+ %   application:start(sd),
+    
+   
   %  spawn(fun()->h_beat(?HbInterval) end),
     {ok, #state{}}.
     
@@ -127,6 +128,14 @@ init([]) ->
 %% --------------------------------------------------------------------
 handle_call({ping},_From,State) ->
     Reply={pong,node(),?MODULE},
+    {reply, Reply, State};
+
+handle_call({add_deployment,AppId,Vsn},_From,State) ->
+    Reply=op_lib:add_deployment(AppId,Vsn),
+    {reply, Reply, State};
+
+handle_call({remove_deployment,DeploymentId},_From,State) ->
+    Reply=op_lib:remove_deployment(DeploymentId),
     {reply, Reply, State};
 
 handle_call({add_db_node,HostId,VmId},_From,State) ->
